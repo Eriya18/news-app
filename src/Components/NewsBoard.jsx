@@ -1,22 +1,66 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import NewsItem from "./NewsItem";
 
-const NewsBoard = ({category}) => {
+const NewsBoard = ({ category }) => {
+  const [articles, setArticles] = useState([]);     // always an array
+  const [error, setError] = useState(null);
 
-    const [articles, setArticles] = useState([]);
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=d959061382c04b12a456a8d8b952993a`;
 
-    useEffect(()=>{
-        let url= `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${import.meta.env.VITE_API_KEY}`;
-        fetch(url).then(response=> response.json()).then(data=> setArticles(data.articles));
-    },[category])
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          // handle special NewsAPI errors
+          throw new Error(`NewsAPI error: HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // protect against undefined
+        if (!data.articles) {
+          setArticles([]);
+          throw new Error("No articles found in response");
+        }
+
+        setArticles(data.articles);
+
+      } catch (err) {
+        console.error("Fetch error:", err.message);
+        setError(err.message);
+        setArticles([]);       // prevent crashes
+      }
+    };
+
+    fetchNews();
+  }, [category]);
+
+  // OPTIONAL: show error message in UI
+  if (error) {
+    return <h2 style={{ color: "red", textAlign: "center" }}>
+      Error loading news: {error}
+    </h2>;
+  }
 
   return (
-    <div>
-        <h2 className="text-center">Latest <span className="badge bg-danger">News</span></h2>
-        {articles.map((news, index)=>{
-            return <NewsItem key={index} title={news.title} description={news.description} src={news.urlToImage} url={news.url}/>
-        })}
+    <div className="news-board">
+      {articles.length === 0 ? (
+        <p style={{ textAlign: "center" }}>No articles available.</p>
+      ) : (
+        articles.map((article, index) => (
+          <NewsItem 
+            key={index}
+            title={article.title}
+            description={article.description}
+            urlToImage={article.urlToImage}
+            url={article.url}
+          />
+        ))
+      )}
     </div>
-  )
-}
+  );
+};
+
 export default NewsBoard;

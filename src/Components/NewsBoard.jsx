@@ -8,16 +8,15 @@ const NewsBoard = ({ category }) => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=d959061382c04b12a456a8d8b952993a`;
-
-        const res = await fetch(url);
-
-        if (!res.ok) {
-          // handle special NewsAPI errors
-          throw new Error(`NewsAPI error: HTTP ${res.status}`);
-        }
-
-        const data = await res.json();
+        // inside fetchNews()
+const url = `/api/news?category=${encodeURIComponent(category)}`;
+// (no API key in client)
+const res = await fetch(url);
+if (!res.ok) {
+  throw new Error(`NewsAPI error: HTTP ${res.status}`);
+}
+const data = await res.json();
+setArticles(Array.isArray(data.articles) ? data.articles : []);
 
         // protect against undefined
         if (!data.articles) {
